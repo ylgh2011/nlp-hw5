@@ -12,5 +12,5 @@ system = [line.strip().split() for line in sys.stdin]
 
 stats = [0 for i in xrange(10)]
 for (r,s) in zip(ref, system):
-  stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
+    stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
 print bleu.bleu(stats)
