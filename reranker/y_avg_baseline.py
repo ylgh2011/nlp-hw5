@@ -25,7 +25,8 @@ optparser.add_option("-p", "--epo", dest="epo", default=5, help="number of epoch
 
 
 (opts, _) = optparser.parse_args()
-entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
+# entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
+entry = namedtuple("entry", "sentence, smoothed_bleu, feature_list")
 
 pre_process(opts.fr, opts.nbest)
 pre_process(opts.testfr, opts.testnbest)
@@ -89,13 +90,16 @@ def main():
         (i, sentence, features) = line.strip().split("|||")
         i = int(i)
         stats = list(bleu_stats(sentence, references[i]))
-        bleu_score = bleu(stats)
+        # bleu_score = bleu(stats)
         smoothed_bleu_score = smoothed_bleu(stats)
         # making the feature string to float list
         feature_list = [float(x) for x in features.split()]
+        if j == 10:
+            break
         if len(nbests)<=i:
             nbests.append([])
-        nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
+        # nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
+        nbests[i].append(entry(sentence, smoothed_bleu_score, feature_list))
         if j%5000 == 0:
             sys.stderr.write(".")
 

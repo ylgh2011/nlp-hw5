@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import optparse, sys, os
 from collections import namedtuple, defaultdict
-from bleu import bleu_stats, bleu, smoothed_bleu
+# from bleu import bleu_stats, bleu, smoothed_bleu
+import bleu
 from operator import itemgetter
 import itertools
 import random
@@ -18,7 +19,8 @@ optparser.add_option("-e", "--eta", dest="eta", default=0.1, help="perceptron le
 optparser.add_option("-p", "--epo", dest="epo", default=5, help="number of epochs for perceptron training (default 5)")
 
 (opts, _) = optparser.parse_args()
-entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
+# entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
+entry = namedtuple("entry", "sentence, smoothed_bleu, feature_list")
 
 
 def get_sample(nbest):
@@ -78,24 +80,27 @@ def main():
     for j,line in enumerate(open(opts.nbest)):
         (i, sentence, features) = line.strip().split("|||")
         i = int(i)
-        stats = list(bleu_stats(sentence, references[i]))
-        bleu_score = bleu(stats)
-        smoothed_bleu_score = smoothed_bleu(stats)
+        stats = list(bleu.bleu_stats(sentence, references[i]))
+        # bleu_score = bleu.bleu(stats)
+        smoothed_bleu_score = bleu.smoothed_bleu(stats)
         # making the feature string to float list
         feature_list = [float(x) for x in features.split()]
         if len(nbests)<=i:
             nbests.append([])
-        nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
+        # nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
+        nbests[i].append(entry(sentence, smoothed_bleu_score, feature_list))
+
         if j%5000 == 0:
             sys.stderr.write(".")
 
     arg_num = len(nbests[0][0].feature_list)
     theta = [1.0/arg_num for _ in xrange(arg_num)] #initialization
 
-    avg_theta = [ 0 for _ in xrange(arg_num)]
-    avg_cnt = 0
+    weights = [ [] for _ in xrange(opts.epo)]
     sys.stderr.write("\nTraining...\n")
-    for i in xrange(opts.epo):
+    for j in xrange(opts.epo):
+        avg_theta = [ 0.0 for _ in xrange(arg_num)]
+        avg_cnt = 0
         mistake = 0;
         for nbest in nbests:
             sample = get_sample(nbest)
@@ -108,9 +113,44 @@ def main():
                     theta = vector_plus(theta, vector_plus(v1, v2, -1), opts.eta)
                     avg_theta = vector_plus(avg_theta, theta)
                     avg_cnt += 1
+
         sys.stderr.write("Mistake:  %s\n" % (mistake,))
-    final_theta = [ t / avg_cnt for t in avg_theta]
-    print "\n".join([str(weight) for weight in final_theta])
+        weights[j] = [ avg / avg_cnt if avg_cnt !=0 else 1/float(arg_num) for avg in avg_theta ]
+
+
+
+    sys.stderr.write("Computing best BLEU score and outputing...\n")
+    # instead of print the averaged-out weights, print the weights that maximize the BLEU score    
+    # print "\n".join([str(weight) for weight in final_theta])
+
+    bleu_score = [0 for _ in weights]
+    for j, w in enumerate(weights):
+        trans = []
+        translation = namedtuple("translation", "english, score")
+        system = []
+        for i, nbest in enumerate(nbests):
+            for et in nbest:
+                if len(trans) <= int(i):
+                    trans.append([])
+
+                trans[int(i)].append(translation(et.sentence, sum([x*y for x,y in zip(w, et.feature_list)])))
+
+        for tran in trans:
+            system.append(sorted(tran, key=lambda x: -x.score)[0].english)
+        
+        stats = [0 for i in xrange(10)]
+        for (r,s) in zip(references, system):
+            stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
+
+        bleu_score[j] = bleu.bleu(stats)
+
+    idx = [i for i, bscore in enumerate(bleu_score) if bscore == max(bleu_score)][0]
+    sys.stderr.write("Maximum BLEU score of training data is: {}\n".format(max(bleu_score)))
+    sys.stderr.write("Corresponding weights are: {}\n".format(" ".join([ str(w) for w in weights[idx] ])))
+    print "\n".join([str(weight) for weight in weights[idx]])
+
+
+
 
 if __name__ == '__main__':
     main()
