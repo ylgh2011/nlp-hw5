@@ -92,6 +92,8 @@ def main():
     arg_num = len(nbests[0][0].feature_list)
     theta = [1.0/arg_num for _ in xrange(arg_num)] #initialization
 
+    avg_theta = [ 0 for _ in xrange(arg_num)]
+    avg_cnt = 0
     sys.stderr.write("\nTraining...\n")
     for i in xrange(opts.epo):
         mistake = 0;
@@ -104,9 +106,11 @@ def main():
                 if dot_product(theta, v1) <= dot_product(theta, v2):
                     mistake += 1
                     theta = vector_plus(theta, vector_plus(v1, v2, -1), opts.eta)
+                    avg_theta = vector_plus(avg_theta, theta)
+                    avg_cnt += 1
         sys.stderr.write("Mistake:  %s\n" % (mistake,))
-    avg_theta = avg_theta / avg_cnt
-    print "\n".join([str(weight) for weight in avg_theta])
+    final_theta = [ t / avg_cnt for t in avg_theta]
+    print "\n".join([str(weight) for weight in final_theta])
 
 if __name__ == '__main__':
     main()
