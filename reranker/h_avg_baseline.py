@@ -12,11 +12,11 @@ from math import fabs
 optparser = optparse.OptionParser()
 optparser.add_option("-n", "--nbest", dest="nbest", default=os.path.join("data", "train.nbest"), help="N-best file")
 optparser.add_option("--en", dest="en", default=os.path.join("data", "train.en"), help="target language references for learning how to rank the n-best list")
-optparser.add_option("-t", "--tau", dest="tau", type="int", default=5000, help="samples generated from n-best list per input sentence (default 5000)")
+optparser.add_option("-t", "--tau", dest="tau", type="float", default=5000, help="samples generated from n-best list per input sentence (default 5000)")
 optparser.add_option("-a", "--alpha", dest="alpha", type="float", default=0.1, help="sampler acceptance cutoff (default 0.1)")
-optparser.add_option("-x", "--xi", dest="xi", type="int", default=100, help="training data generated from the samples tau (default 100)")
+optparser.add_option("-x", "--xi", dest="xi", type="float", default=100, help="training data generated from the samples tau (default 100)")
 optparser.add_option("-e", "--eta", dest="eta", type="float", default=0.1, help="perceptron learning rate (default 0.1)")
-optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="number of epochs for perceptron training (default 5)")
+optparser.add_option("-p", "--epo", dest="epo", type="imnt",default=5, help="number of epochs for perceptron training (default 5)")
 
 (opts, _) = optparser.parse_args()
 # entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
@@ -146,7 +146,7 @@ def main():
     # idx = [i for i, bscore in enumerate(bleu_score) if bscore == max(bleu_score)][0]
     # sys.stderr.write("Maximum BLEU score of training data is: {}\n".format(max(bleu_score)))
     # sys.stderr.write("Corresponding weights are: {}\n".format(" ".join([ str(w) for w in weights[idx] ])))
-    print "\n".join([str(weight) for weight in weights[idx]])
+    # print "\n".join([str(weight) for weight in weights[idx]])
 
 
 
