@@ -6,14 +6,14 @@ from operator import itemgetter
 import itertools
 import random
 from math import fabs
-from pre_adding_features import pre_process
+from library import pre_process
 
 
 optparser = optparse.OptionParser()
 optparser.add_option("-n", "--nbest", dest="nbest", default=os.path.join("data", "train.nbest"), help="N-best file")
 optparser.add_option("--en", dest="en", default=os.path.join("data", "train.en"), help="target language references for learning how to rank the n-best list")
-optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="French file")
 
+optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="French file")
 optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
 optparser.add_option("--testfr", dest="testfr", default=os.path.join("data", "test.fr"), help="test French file")
 

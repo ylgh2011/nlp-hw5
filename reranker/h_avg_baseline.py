@@ -7,6 +7,10 @@ from operator import itemgetter
 import itertools
 import random
 from math import fabs
+from library import pre_process
+from library import read_ds_from_file
+from library import write_ds_to_file
+
 
 
 optparser = optparse.OptionParser()
@@ -18,9 +22,18 @@ optparser.add_option("-x", "--xi", dest="xi", type="int", default=100, help="tra
 optparser.add_option("-e", "--eta", dest="eta", type="float", default=0.1, help="perceptron learning rate (default 0.1)")
 optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="number of epochs for perceptron training (default 5)")
 
+
+optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="train French file")
+optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
+optparser.add_option("--testfr", dest="testfr", default=os.path.join("data", "test.fr"), help="test French file")
+optparser.add_option("--nbestDic", dest="nbestDS", default=os.path.join("data", "nbest.ds"), help="dumping file of the data structure that storing scores for nbestDic")
+
 (opts, _) = optparser.parse_args()
 # entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
 entry = namedtuple("entry", "sentence, smoothed_bleu, feature_list")
+
+pre_process(opts.fr, opts.nbest)
+pre_process(opts.testfr, opts.testnbest)
 
 
 def get_sample(nbest):
@@ -67,7 +80,7 @@ def vector_plus(v1, v2, multiply=1):
 
 
 def main():
-    nbests = []
+    nbests = read_ds_from_file(opts.nbestDS)
     references = []
     sys.stderr.write("Reading English Sentences")
     for i, line in enumerate(open(opts.en)):
@@ -76,22 +89,26 @@ def main():
         if i%100 == 0:
             sys.stderr.write(".")
 
-    sys.stderr.write("\nReading ndests")
-    for j,line in enumerate(open(opts.nbest)):
-        (i, sentence, features) = line.strip().split("|||")
-        i = int(i)
-        stats = list(bleu.bleu_stats(sentence, references[i]))
-        # bleu_score = bleu.bleu(stats)
-        smoothed_bleu_score = bleu.smoothed_bleu(stats)
-        # making the feature string to float list
-        feature_list = [float(x) for x in features.split()]
-        if len(nbests)<=i:
-            nbests.append([])
-        # nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
-        nbests[i].append(entry(sentence, smoothed_bleu_score, feature_list))
 
-        if j%5000 == 0:
-            sys.stderr.write(".")
+    if nbests is None:
+        nbests = []
+        sys.stderr.write("\nReading ndests")
+        for j,line in enumerate(open(opts.nbest)):
+            (i, sentence, features) = line.strip().split("|||")
+            i = int(i)
+            stats = list(bleu.bleu_stats(sentence, references[i]))
+            # bleu_score = bleu.bleu(stats)
+            smoothed_bleu_score = bleu.smoothed_bleu(stats)
+            # making the feature string to float list
+            feature_list = [float(x) for x in features.split()]
+            if len(nbests)<=i:
+                nbests.append([])
+            # nbests[i].append(entry(sentence, bleu_score, smoothed_bleu_score, feature_list))
+            nbests[i].append(entry(sentence, smoothed_bleu_score, feature_list))
+
+            if j%5000 == 0:
+                sys.stderr.write(".")
+        write_ds_to_file(nbests, opts.nbestDS)
 
     arg_num = len(nbests[0][0].feature_list)
     theta = [1.0/arg_num for _ in xrange(arg_num)] #initialization
