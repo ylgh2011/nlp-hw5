@@ -3,4 +3,6 @@
 *.o
 *.pyc
 *.ignore
+*.weights
+
 
