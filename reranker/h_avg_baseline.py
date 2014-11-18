@@ -80,6 +80,7 @@ def vector_plus(v1, v2, multiply=1):
 
 
 def main():
+    sys.stderr.write("Try reading nbests datastructure from disk ... ")
     nbests = read_ds_from_file(opts.nbestDS)
     references = []
     sys.stderr.write("Reading English Sentences")

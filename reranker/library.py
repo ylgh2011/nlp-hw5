@@ -35,17 +35,17 @@ def pre_process(frFileName, nBestFileName):
     for line in nBestFile:
         # print line
         (i, sentence, features) = line.strip().split("|||")
-        if i == lastI:
-            curLines.append(line)
-            for word in sentence.split():
-                e_counts[word] = e_counts[word]+1 if word in e_counts else 1
-        else:
-            lastI = i
+        # if i == lastI:
+        #     curLines.append(line)
+        #     for word in sentence.split():
+        #         e_counts[word] = e_counts[word]+1 if word in e_counts else 1
+        # else:
+        #     lastI = i
 
-            for inLine in curLines
-            lastI = i
-            curLines = []
-            e_counts = {}
+        #     for inLine in curLines
+        #     lastI = i
+        #     curLines = []
+        #     e_counts = {}
 
         feature_list = [x for x in features.split()]
         if len(feature_list) == 6:
