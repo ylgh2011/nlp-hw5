@@ -111,8 +111,9 @@ def main():
                 if dot_product(theta, v1) <= dot_product(theta, v2):
                     mistake += 1
                     theta = vector_plus(theta, vector_plus(v1, v2, -1), opts.eta)
-                    avg_theta = vector_plus(avg_theta, theta)
-                    avg_cnt += 1
+                    
+                avg_theta = vector_plus(avg_theta, theta)
+                avg_cnt += 1
 
         sys.stderr.write("Mistake:  %s\n" % (mistake,))
         weights[j] = [ avg / avg_cnt if avg_cnt !=0 else 1/float(arg_num) for avg in avg_theta ]
