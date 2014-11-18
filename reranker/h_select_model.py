@@ -12,11 +12,11 @@ from math import fabs
 optparser = optparse.OptionParser()
 optparser.add_option("-n", "--nbest", dest="nbest", default=os.path.join("data", "train.nbest"), help="N-best file")
 optparser.add_option("--en", dest="en", default=os.path.join("data", "train.en"), help="target language references for learning how to rank the n-best list")
-optparser.add_option("-t", "--tau", dest="tau", type="int", default=5000, help="samples generated from n-best list per input sentence (default 5000)")
-optparser.add_option("-a", "--alpha", dest="alpha", type="float", default=0.1, help="sampler acceptance cutoff (default 0.1)")
-optparser.add_option("-x", "--xi", dest="xi", type="int", default=100, help="training data generated from the samples tau (default 100)")
-optparser.add_option("-e", "--eta", dest="eta", type="float", default=0.1, help="perceptron learning rate (default 0.1)")
-optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="number of epochs for perceptron training (default 5)")
+optparser.add_option("-t", "--tau", dest="tau", default=5000, help="samples generated from n-best list per input sentence (default 5000)")
+optparser.add_option("-a", "--alpha", dest="alpha", default=0.1, help="sampler acceptance cutoff (default 0.1)")
+optparser.add_option("-x", "--xi", dest="xi", default=100, help="training data generated from the samples tau (default 100)")
+optparser.add_option("-e", "--eta", dest="eta", default=0.1, help="perceptron learning rate (default 0.1)")
+optparser.add_option("-p", "--epo", dest="epo", default=5, help="number of epochs for perceptron training (default 5)")
 
 (opts, _) = optparser.parse_args()
 # entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
@@ -96,10 +96,11 @@ def main():
     arg_num = len(nbests[0][0].feature_list)
     theta = [1.0/arg_num for _ in xrange(arg_num)] #initialization
 
-    avg_theta = [ 0.0 for _ in xrange(arg_num)]
-    avg_cnt = 0
+    weights = [ [] for _ in xrange(opts.epo)]
     sys.stderr.write("\nTraining...\n")
     for j in xrange(opts.epo):
+        avg_theta = [ 0.0 for _ in xrange(arg_num)]
+        avg_cnt = 0
         mistake = 0;
         for nbest in nbests:
             sample = get_sample(nbest)
@@ -115,37 +116,38 @@ def main():
                 avg_cnt += 1
 
         sys.stderr.write("Mistake:  %s\n" % (mistake,))
-    
+        weights[j] = [ avg / avg_cnt if avg_cnt !=0 else 1/float(arg_num) for avg in avg_theta ]
 
-    weights = [ avg / avg_cnt if avg_cnt !=0 else 1/float(arg_num) for avg in avg_theta ]
+
+
     sys.stderr.write("Computing best BLEU score and outputing...\n")
     # instead of print the averaged-out weights, print the weights that maximize the BLEU score    
-    print "\n".join([str(weight) for weight in weights])
+    # print "\n".join([str(weight) for weight in final_theta])
 
-    # bleu_score = [0 for _ in weights]
-    # for j, w in enumerate(weights):
-    #     trans = []
-    #     translation = namedtuple("translation", "english, score")
-    #     system = []
-    #     for i, nbest in enumerate(nbests):
-    #         for et in nbest:
-    #             if len(trans) <= int(i):
-    #                 trans.append([])
+    bleu_score = [0 for _ in weights]
+    for j, w in enumerate(weights):
+        trans = []
+        translation = namedtuple("translation", "english, score")
+        system = []
+        for i, nbest in enumerate(nbests):
+            for et in nbest:
+                if len(trans) <= int(i):
+                    trans.append([])
 
-    #             trans[int(i)].append(translation(et.sentence, sum([x*y for x,y in zip(w, et.feature_list)])))
+                trans[int(i)].append(translation(et.sentence, sum([x*y for x,y in zip(w, et.feature_list)])))
 
-    #     for tran in trans:
-    #         system.append(sorted(tran, key=lambda x: -x.score)[0].english)
+            for tran in trans:
+                system.append(sorted(tran, key=lambda x: -x.score)[0].english)
         
-    #     stats = [0 for i in xrange(10)]
-    #     for (r,s) in zip(references, system):
-    #         stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
+            stats = [0 for i in xrange(10)]
+            for (r,s) in zip(references, system):
+                stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
 
-    #     bleu_score[j] = bleu.bleu(stats)
+            bleu_score[j] = bleu.bleu(stats)
 
-    # idx = [i for i, bscore in enumerate(bleu_score) if bscore == max(bleu_score)][0]
-    # sys.stderr.write("Maximum BLEU score of training data is: {}\n".format(max(bleu_score)))
-    # sys.stderr.write("Corresponding weights are: {}\n".format(" ".join([ str(w) for w in weights[idx] ])))
+    idx = [i for i, bscore in enumerate(bleu_score) if bscore == max(bleu_score)][0]
+    sys.stderr.write("Maximum BLEU score of training data is: {}\n".format(max(bleu_score)))
+    sys.stderr.write("Corresponding weights are: {}\n".format(" ".join([ str(w) for w in weights[idx] ])))
     print "\n".join([str(weight) for weight in weights[idx]])
 
 
