@@ -109,7 +109,7 @@ def pre_process(frFileName, nBestFileName, enFileName):
             sys.stderr.write('.')
 
         (i, sentence, features) = line.strip().split("|||")
-        feature_list = [x for x in ss(features)][0:6]
+        feature_list = [x for x in ss(features)]#[0:6]
 
         index = int(i) if int(i) < len(englishes) else len(englishes) - 1
         # feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
