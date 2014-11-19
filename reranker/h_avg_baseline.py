@@ -26,7 +26,7 @@ optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="numb
 optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="train French file")
 optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
 optparser.add_option("--testfr", dest="testfr", default=os.path.join("data", "test.fr"), help="test French file")
-optparser.add_option("--nbestDic", dest="nbestDS", default=os.path.join("data", "nbest.ds"), help="dumping file of the data structure that storing scores for nbestDic")
+optparser.add_option("--nbestDic", dest="nbestDS", default=os.path.join("data", "nbest.ds.gz"), help="dumping file of the data structure that storing scores for nbestDic")
 optparser.add_option("--testen", dest="testen", default=os.path.join("data", "test.en"), help="test en")
 
 (opts, _) = optparser.parse_args()
@@ -139,35 +139,6 @@ def main():
     sys.stderr.write("Computing best BLEU score and outputing...\n")
     # instead of print the averaged-out weights, print the weights that maximize the BLEU score    
     print "\n".join([str(weight) for weight in weights])
-
-    # bleu_score = [0 for _ in weights]
-    # for j, w in enumerate(weights):
-    #     trans = []
-    #     translation = namedtuple("translation", "english, score")
-    #     system = []
-    #     for i, nbest in enumerate(nbests):
-    #         for et in nbest:
-    #             if len(trans) <= int(i):
-    #                 trans.append([])
-
-    #             trans[int(i)].append(translation(et.sentence, sum([x*y for x,y in zip(w, et.feature_list)])))
-
-    #     for tran in trans:
-    #         system.append(sorted(tran, key=lambda x: -x.score)[0].english)
-        
-    #     stats = [0 for i in xrange(10)]
-    #     for (r,s) in zip(references, system):
-    #         stats = [sum(scores) for scores in zip(stats, bleu.bleu_stats(s,r))]
-
-    #     bleu_score[j] = bleu.bleu(stats)
-
-    # idx = [i for i, bscore in enumerate(bleu_score) if bscore == max(bleu_score)][0]
-    # sys.stderr.write("Maximum BLEU score of training data is: {}\n".format(max(bleu_score)))
-    # sys.stderr.write("Corresponding weights are: {}\n".format(" ".join([ str(w) for w in weights[idx] ])))
-    # print "\n".join([str(weight) for weight in weights[idx]])
-
-
-
 
 if __name__ == '__main__':
     main()

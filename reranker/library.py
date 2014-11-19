@@ -5,9 +5,11 @@ from math import log
 
 def read_ds_from_file(filename):
     import pickle
+    import gzip
     pfile = None
     try:
-        pfile = open(filename, 'rb')
+        pfile = gzip.open(filename, 'rb') if filename[-3:] == '.gz' \
+                else open(filename, 'rb')
     except:
         dataStructure = None
     try:
@@ -20,7 +22,9 @@ def read_ds_from_file(filename):
 
 def write_ds_to_file(dataStructure, filename):
     import pickle
-    output = open(filename, 'wb')
+    import gzip
+    output = gzip.open(filename, 'rb') if filename[-3:] == '.gz' \
+                else open(filename, 'rb')
     pickle.dump(dataStructure, output)
     output.close()
 
@@ -40,7 +44,7 @@ def ss(s):
     return s.strip().split()
 
 
-def init_t(tFileName):
+def init(tFileName):
     sys.stderr.write("Reading dump dictionary %s for ibm model 1 ... \n" % tFileName)
     t = read_ds_from_file(tFileName)
     if t is None:
@@ -58,6 +62,7 @@ def t_f_given_e(t, fw, ew):
 epsi = 1.0
 def ibm_model_1_score(t, f, e):
     l = float(len(ss(e)))
+    m = float(len(ss(f)))
     score = log(epsi / float((l+1)**len(ss(f))))
     for fw in ss(f):
         fw_sum = 0
@@ -66,6 +71,15 @@ def ibm_model_1_score(t, f, e):
         score += log(fw_sum)
     return score
 
+def ibm_model_2_score(t, q, f, e):
+    l = float(len(ss(e)))
+    score = log(epsi / float((l+1)**len(ss(f))))
+    for i, fw in enumerate(ss(f)):
+        fw_sum = 0
+        for j, ew in enumerate(ss(e)):
+            fw_sum += t_f_given_e(t, fw, ew)*q_j_given_i_l_m(j, i, l, m)
+        score += log(fw_sum)
+    return score    
 
 
 def pre_process(frFileName, nBestFileName, enFileName):
@@ -73,19 +87,21 @@ def pre_process(frFileName, nBestFileName, enFileName):
     frenches = []
     englishes = []
     nBestLines = []
-    for line in file(nBestFileName):
-        (i, sentence, features) = line.strip().split("|||")
-        if len(features.strip().split()) == 9:
-            sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
-            return
-        else:
-            break
+    # for line in file(nBestFileName):
+    #     (i, sentence, features) = line.strip().split("|||")
+    #     if len(features.strip().split()) == 9:
+    #         sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
+    #         return
+    #     else:
+    #         break
     for line in file(frFileName):
         frenches.append(line)
     for line in file(enFileName):
         englishes.append(line)
 
-    t = init_t('./data/ibm1.ds')
+    # initialization ibm model t dictionary and q dictionary
+    t = init('./data/ibm2.t.ds.gz')
+    q = init('./data/ibm2.q.ds.gz')
     newlines = []
     sys.stderr.write("Calculating new features for %s ... \n" % nBestFileName)
     for j, line in enumerate(file(nBestFileName)):
@@ -96,9 +112,10 @@ def pre_process(frFileName, nBestFileName, enFileName):
         feature_list = [x for x in ss(features)][0:6]
 
         index = int(i) if int(i) < len(englishes) else len(englishes) - 1
-        feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
-        feature_list.append(str(untranslatedWords(frenches[int(i)], sentence, englishes[index])))
-        feature_list.append(str(ibm_model_1_score(t, frenches[int(i)], sentence))) # IBM model 1 score
+        # feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
+        # feature_list.append(str(untranslatedWords(frenches[int(i)], sentence, englishes[index])))
+        # feature_list.append(str(ibm_model_1_score(t, frenches[int(i)], sentence))) # IBM model 1 score
+        feature_list.append(str(ibm_model_2_score(t, q, frenches[int(i)], sentence))) # IBM model 2 score
 
         newlines.append(i + '|||' + sentence + '||| ' + ' '.join(feature_list) + '\n')
 
