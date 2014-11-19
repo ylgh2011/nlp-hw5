@@ -27,13 +27,14 @@ optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr")
 optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
 optparser.add_option("--testfr", dest="testfr", default=os.path.join("data", "test.fr"), help="test French file")
 optparser.add_option("--nbestDic", dest="nbestDS", default=os.path.join("data", "nbest.ds"), help="dumping file of the data structure that storing scores for nbestDic")
+optparser.add_option("--testen", dest="testen", default=os.path.join("data", "test.en"), help="test en")
 
 (opts, _) = optparser.parse_args()
 # entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
 entry = namedtuple("entry", "sentence, smoothed_bleu, feature_list")
 
-pre_process(opts.fr, opts.nbest)
-pre_process(opts.testfr, opts.testnbest)
+pre_process(opts.fr, opts.nbest, opts.en)
+pre_process(opts.testfr, opts.testnbest, opts.testen)
 
 
 def get_sample(nbest):
@@ -80,20 +81,19 @@ def vector_plus(v1, v2, multiply=1):
 
 
 def main():
-    sys.stderr.write("Try reading nbests datastructure from disk ... ")
-    nbests = read_ds_from_file(opts.nbestDS)
     references = []
-    sys.stderr.write("Reading English Sentences")
+    sys.stderr.write("Reading English Sentences\n")
     for i, line in enumerate(open(opts.en)):
         '''Initialize references to correct english sentences'''
         references.append(line)
         if i%100 == 0:
             sys.stderr.write(".")
 
-
+    sys.stderr.write("\nTry reading nbests datastructure from disk ... \n")
+    nbests = read_ds_from_file(opts.nbestDS)
     if nbests is None:
         nbests = []
-        sys.stderr.write("\nReading ndests")
+        sys.stderr.write("No nbests on disk, so calculating ndests ... \n")
         for j,line in enumerate(open(opts.nbest)):
             (i, sentence, features) = line.strip().split("|||")
             i = int(i)

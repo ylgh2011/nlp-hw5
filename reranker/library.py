@@ -1,68 +1,7 @@
 #!/usr/bin/env python
 import optparse, sys, os
 from collections import namedtuple, defaultdict
-
-
-def untranslatedWords(f, e):
-    count = 0
-    for word in e.split():
-        if word in f:
-            count += 1
-    return count
-
-
-
-def countWord(word, e):
-    count = 0
-    for w in e.split():
-        if w == word:
-            count += 1
-    return count
-
-
-
-def pre_process(frFileName, nBestFileName):
-    newlines = []
-    frenches = []
-    
-    for line in file(frFileName):
-        frenches.append(line)
-
-    nBestFile = open(nBestFileName, 'r')
-    lastI = 0
-    curLines = []
-    e_counts = {}
-    for line in nBestFile:
-        # print line
-        (i, sentence, features) = line.strip().split("|||")
-        # if i == lastI:
-        #     curLines.append(line)
-        #     for word in sentence.split():
-        #         e_counts[word] = e_counts[word]+1 if word in e_counts else 1
-        # else:
-        #     lastI = i
-
-        #     for inLine in curLines
-        #     lastI = i
-        #     curLines = []
-        #     e_counts = {}
-
-        feature_list = [x for x in features.split()]
-        if len(feature_list) == 6:
-            feature_list.append(str(len(sentence.split())))
-            feature_list.append(str(untranslatedWords(frenches[int(i)], sentence)))
-        else:
-            sys.stderr.write('Original feature number is not 6, so the nbest file is not updated\n')
-            return
-        newlines.append(i + '|||' + sentence + '||| ' + ' '.join(feature_list) + '\n')
-    nBestFile.close()
-    
-    # print newlines
-    nBestFile = open(nBestFileName, 'w')
-    nBestFile.writelines(newlines)
-    nBestFile.close()
-
-
+from math import log
 
 def read_ds_from_file(filename):
     import pickle
@@ -85,6 +24,89 @@ def write_ds_to_file(dataStructure, filename):
     pickle.dump(dataStructure, output)
     output.close()
 
+
+
+
+def untranslatedWords(f, e, std_e):
+    count = 0
+    for word in e.split():
+        if (word not in std_e) and (word in f):
+            count += 1
+
+    return -1 * count
+
+
+def ss(s):
+    return s.strip().split()
+
+
+def init_t(tFileName):
+    sys.stderr.write("Reading dump dictionary %s for ibm model 1 ... \n" % tFileName)
+    t = read_ds_from_file(tFileName)
+    if t is None:
+        sys.stderr.write("There is no such file %s to initialize ibm model 1 dictionary" % tFileName)
+        exit(1)
+    sys.stderr.write("Finish reading dump dictionary, len=" + str(len(t)) + '\n')
+    return t
+
+def t_f_given_e(t, fw, ew):
+    if (fw, ew) in t:
+        return t[fw, ew]
+    else:
+        return 1.0 / len(t)
+
+epsi = 1.0
+def ibm_model_1_score(t, f, e):
+    l = float(len(ss(e)))
+    score = log(epsi / float((l+1)**len(ss(f))))
+    for fw in ss(f):
+        fw_sum = 0
+        for ew in ss(e):
+            fw_sum += t_f_given_e(t, fw, ew)
+        score += log(fw_sum)
+    return score
+
+
+
+def pre_process(frFileName, nBestFileName, enFileName):
+    sys.stderr.write("Pre-processing new features for %s: (sentence length, number of untranslated words, IBM model 1 score)\n" % nBestFileName)
+    frenches = []
+    englishes = []
+    nBestLines = []
+    for line in file(nBestFileName):
+        (i, sentence, features) = line.strip().split("|||")
+        if len(features.strip().split()) == 9:
+            sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
+            return
+        else:
+            break
+    for line in file(frFileName):
+        frenches.append(line)
+    for line in file(enFileName):
+        englishes.append(line)
+
+    t = init_t('./data/ibm1.ds')
+    newlines = []
+    sys.stderr.write("Calculating new features for %s ... \n" % nBestFileName)
+    for j, line in enumerate(file(nBestFileName)):
+        if j % 2000 == 1:
+            sys.stderr.write('.')
+
+        (i, sentence, features) = line.strip().split("|||")
+        feature_list = [x for x in ss(features)][0:6]
+
+        index = int(i) if int(i) < len(englishes) else len(englishes) - 1
+        feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
+        feature_list.append(str(untranslatedWords(frenches[int(i)], sentence, englishes[index])))
+        feature_list.append(str(ibm_model_1_score(t, frenches[int(i)], sentence))) # IBM model 1 score
+
+        newlines.append(i + '|||' + sentence + '||| ' + ' '.join(feature_list) + '\n')
+
+    # print newlines
+    sys.stderr.write("\nWriting new content to %s ... \n" % nBestFileName)
+    nBestFile = open(nBestFileName, 'wb')
+    nBestFile.writelines(newlines)
+    nBestFile.close()
 
 
 if __name__ == '__main__':
