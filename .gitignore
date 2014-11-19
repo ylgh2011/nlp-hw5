@@ -4,5 +4,6 @@
 *.pyc
 *.ignore
 *.weights
-
+*.nbest
+*.ds
 
