@@ -1,46 +1,51 @@
 # Overall desciption
 
-Our algorithm can be summarized as an IBM model 2 with bidirection agree voiting, intersection and diagonal heuristic operation
+Our algorithm can be summarized batch pairwise rerank optimization with average percptron and extra features. 
 
 # Pairwise rerank optimization with average percptron
+In our implementation of pairwise rerank optimization, we use the average percptron instead of the general perceptron algorithm in order to get a steady result of weights. And for to accelarate the procedure of calculating nbests BLEU score, we dump the pre-calculated data file into the directory (data/nbest.ds.gz). Everytime the program is executed, it will first try load this nbest.ds.gz, if not available, it will then do the calculating nbest process.
 
-After failing to implement a real HMM based model, we adapt a cheaper noisy-channel model, which is IBM model 2. According to its definition, an IBM-M2 model consists of a finite set E of English words, a set F of French words, and integers M and L specifying the maximum length of French and English sentences respectively. The parameters of the model are as follows:
-    Translation parameter t(f | e) - conditional probability of generating French word f from English word e.
-    Distortion paramter q(j | i, l, m) - probability of alignment variable ai taking the value j, conditioned on the lengths l and m of the English and French sentences.
-We will make an independence assumption of this model and use an interative method with parameter estimation for the training phase. There is some modification to this certain implementation of IBM model 2 so as to improve its performance with German alignment. And those techniques are addressed in the following sections 
+# Extra features (Ps. All features are already pre-processed in train.nbest and test.nbest)
+We added three extra features in our nbests file to improve the final result. 
+1. The first feature is based on the sentence length. The value for the feature is functioned with "-abs(len(present translation) - len(correct translation))".
+2. The second feature is the count of the untranslated words. It is defined with "-count(word for (word in present translation) && (word not in correct translation) and (word in french sentence))". 
+3. The third feature is the the translation score get from ibm model 1. We used the program and the training set in assignment 3 as reference and generated the translation model. We load that model to get the score for each translation.
 
-# Extra features
+All of the new values will be non-negative integer and fit the "bigger is better" pattern. For the first two, the correct answer will get the best score (0). For ibm model 1, the correct answer may not be the highest score.
 
-While using IBM model 2 to update the dictionary Pr(f | e) (probability of a Franch word given an English word), we maintain another dictionary Pr(e | f) (probability of an English word given a Franch word) at the same time.And according to the result of paper 'Alignment by Agreement', we modify the classic IBM model 2 by using joint probablity for calculating the estimated alignment count. And furthur more we apply the add-n smoothing to the probability calculating, in order to smooth the align confidence of the model.
-
-After the training phase (several iterations), the alignment between a pair of words (f_i, e_j) is decided by the product of Pr( f_i | e_j ) and Pr( e_j | f_i ) instead of a single probability.
+We used a length-adapting reading & operating methods in the program so it can accept any length of input feature lists.
 
 
 # Final Score:
-* The final score (AER: 0.266) for our group is produced by running the full text file for 10 times with penalty value of 0.85
-** You could replicate the result by following command
-*** python final_method.py -p europarl -f de -i 10 -t 0.85 > out.a 
-** Please notice that with this method, it will consume about 2 hours to complete the align procedure, the memory space this method will take is around 12 GB
+* The final score (BLEU: 25.596) for our group is produced by running the full text file with the default parameters from the assignment info page on the course website.
+** Since we used the translation model trained from the 3rd assignment, we need an additional source file. We will contact you later with an address of that file.
+** With all the source files prepared, you can regenerate the result using "python default.py > out.weights"
+** The program will change the nbests file so please back-up the original version in advance.
+
+# Warning:
+* We make use of some extra features for the nbest file, and as a result, our method will first preprocess the training and testing English file and French file and then rewrite both training and testing nbest files. 
+** PS. For IBM model 1 score, we made use of an additional training data of homework 3 and generate a dump of word count. In the preprocess procedure, we will first read through this file and then generate the IBM score for nbest file. 
 
 # Usage: 
 * Command line: python final_method.py [options]
+
 Options:
   -h, --help            show this help message and exit
-  -d DATADIR, --datadir=DATADIR
-                        data directory (default=data)
-  -p FILEPREFIX, --prefix=FILEPREFIX
-                        prefix of parallel data files (default=hansards)
-  -e ENGLISH, --english=ENGLISH
-                        suffix of English (target language) filename
-                        (default=en)
-  -f FRENCH, --french=FRENCH
-                        suffix of French (source language) filename
-                        (default=fr)
-  -l LOGFILE, --logfile=LOGFILE
-                        filename for logging output
-  -n NUM_SENTS, --num_sentences=NUM_SENTS
-                        Number of sentences to use for training and alignment
-  -i ITERATION, --iteration=ITERATION
-                        The iteration number for the alignment learning.
-  -t PENALTY, --penalty=PENALTY
-                        pow(pe, abs(i-j))
+  -n NBEST, --nbest=NBEST
+                        N-best file
+  --en=EN               target language references for learning how to rank
+                        the n-best list
+  -t TAU, --tau=TAU     samples generated from n-best list per input sentence
+                        (default 5000)
+  -a ALPHA, --alpha=ALPHA
+                        sampler acceptance cutoff (default 0.1)
+  -x XI, --xi=XI        training data generated from the samples tau (default
+                        100)
+  -e ETA, --eta=ETA     perceptron learning rate (default 0.1)
+  -p EPO, --epo=EPO     number of epochs for perceptron training (default 5)
+  --fr=FR               train French file
+  --testnbest=TESTNBEST
+                        test N-best file
+  --testfr=TESTFR       test French file
+  --nbestDic=NBESTDS    dumping file of the data structure that storing scores
+                        for nbestDic
