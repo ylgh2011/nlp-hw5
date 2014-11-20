@@ -33,8 +33,7 @@ optparser.add_option("--testen", dest="testen", default=os.path.join("data", "te
 # entry = namedtuple("entry", "sentence, bleu_score, smoothed_bleu, feature_list")
 entry = namedtuple("entry", "sentence, smoothed_bleu, feature_list")
 
-pre_process(opts.fr, opts.nbest, opts.en)
-pre_process(opts.testfr, opts.testnbest, opts.testen)
+pre_process( [(opts.fr, opts.nbest, opts.en), (opts.testfr, opts.testnbest, opts.testen)] )
 
 
 def get_sample(nbest):

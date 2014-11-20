@@ -90,26 +90,46 @@ def ibm_model_2_score(t, q, f, e):
     return score    
 
 
-def pre_process(frFileName, nBestFileName, enFileName):
+def pre_process(fileNameList):
+    shouldInit_this_item = []
+
+    for item in fileNameList:
+        frFileName = item[0]
+        nBestFileName = item[1]
+        enFileName = item[2]
+        # for line in file(nBestFileName):
+        #     (i, sentence, features) = line.strip().split("|||")
+        #     if len(features.strip().split()) == 9:
+        #         sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
+        #         shouldInit_this_item.append(0)
+        #     else:
+        #         shouldInit_this_item.append(1)
+        #     break
+        shouldInit_this_item.append(1)
+
+    if sum(shouldInit_this_item) > 0:
+        t = init('./data/ibm2.t.ds.gz')
+        q = init('./data/ibm2.q.ds.gz')
+        for i, item in enumerate(fileNameList):
+            if shouldInit_this_item(i) == 1:
+                frFileName = item[0]
+                nBestFileName = item[1]
+                enFileName = item[2]
+                real_pre_process(frFileName, nBestFileName, enFileName, t, q)
+
+
+def real_pre_process(frFileName, nBestFileName, enFileName, t, q):
     sys.stderr.write("Pre-processing new features for %s: (sentence length, number of untranslated words, IBM model 1 score, IBM model 2 score)\n" % nBestFileName)
     frenches = []
     englishes = []
     nBestLines = []
-    # for line in file(nBestFileName):
-    #     (i, sentence, features) = line.strip().split("|||")
-    #     if len(features.strip().split()) == 9:
-    #         sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
-    #         return
-    #     else:
-    #         break
     for line in file(frFileName):
         frenches.append(line)
     for line in file(enFileName):
         englishes.append(line)
 
     # initialization ibm model t dictionary and q dictionary
-    t = init('./data/ibm2.t.ds.gz')
-    q = init('./data/ibm2.q.ds.gz')
+
     newlines = []
     sys.stderr.write("Calculating new features for %s ... \n" % nBestFileName)
     for j, line in enumerate(file(nBestFileName)):
