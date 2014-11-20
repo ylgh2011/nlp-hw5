@@ -45,10 +45,10 @@ def ss(s):
 
 
 def init(tFileName):
-    sys.stderr.write("Reading dump dictionary %s for ibm model 1 ... \n" % tFileName)
+    sys.stderr.write("Reading dump dictionary %s for ibm model ... \n" % tFileName)
     t = read_ds_from_file(tFileName)
     if t is None:
-        sys.stderr.write("There is no such file %s to initialize ibm model 1 dictionary" % tFileName)
+        sys.stderr.write("There is no such file %s to initialize ibm model dictionary" % tFileName)
         exit(1)
     sys.stderr.write("Finish reading dump dictionary, len=" + str(len(t)) + '\n')
     return t
@@ -83,7 +83,7 @@ def ibm_model_2_score(t, q, f, e):
 
 
 def pre_process(frFileName, nBestFileName, enFileName):
-    sys.stderr.write("Pre-processing new features for %s: (sentence length, number of untranslated words, IBM model 1 score)\n" % nBestFileName)
+    sys.stderr.write("Pre-processing new features for %s: (sentence length, number of untranslated words, IBM model 1 score, IBM model 2 score)\n" % nBestFileName)
     frenches = []
     englishes = []
     nBestLines = []
