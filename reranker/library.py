@@ -52,12 +52,19 @@ def init(tFileName):
         exit(1)
     sys.stderr.write("Finish reading dump dictionary, len=" + str(len(t)) + '\n')
     return t
-
+    
+init_prob = 1.0 / 30.0
 def t_f_given_e(t, fw, ew):
     if (fw, ew) in t:
         return t[fw, ew]
     else:
-        return 1.0 / len(t)
+        return init_prob
+
+def q_j_given_i_l_m(q, j, i, l, m):
+    if (j, i, l, m) in q:
+        return q[j, i, l, m]
+    else:
+        return init_prob
 
 epsi = 1.0
 def ibm_model_1_score(t, f, e):
@@ -77,7 +84,7 @@ def ibm_model_2_score(t, q, f, e):
     for i, fw in enumerate(ss(f)):
         fw_sum = 0
         for j, ew in enumerate(ss(e)):
-            fw_sum += t_f_given_e(t, fw, ew)*q_j_given_i_l_m(j, i, l, m)
+            fw_sum += t_f_given_e(t, fw, ew)*q_j_given_i_l_m(q, j, i, l, m)
         score += log(fw_sum)
     return score    
 
