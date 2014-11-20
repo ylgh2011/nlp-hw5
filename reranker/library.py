@@ -80,6 +80,7 @@ def ibm_model_1_score(t, f, e):
 
 def ibm_model_2_score(t, q, f, e):
     l = float(len(ss(e)))
+    m = float(len(ss(f)))
     score = log(epsi / float((l+1)**len(ss(f))))
     for i, fw in enumerate(ss(f)):
         fw_sum = 0
