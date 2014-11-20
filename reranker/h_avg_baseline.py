@@ -88,11 +88,11 @@ def main():
         if i%100 == 0:
             sys.stderr.write(".")
 
-    sys.stderr.write("\nTry reading nbests datastructure from disk ... \n")
+    sys.stderr.write("\nTry reading %s from disk ... \n" % opts.nbestDS)
     nbests = read_ds_from_file(opts.nbestDS)
     if nbests is None:
         nbests = []
-        sys.stderr.write("No nbests on disk, so calculating ndests ... \n")
+        sys.stderr.write("%s is not on disk, so calculating it ... \n" % opts.nbestDS)
         for j,line in enumerate(open(opts.nbest)):
             (i, sentence, features) = line.strip().split("|||")
             i = int(i)
@@ -108,7 +108,9 @@ def main():
 
             if j%5000 == 0:
                 sys.stderr.write(".")
+        sys.stderr.write("\nWriting %s to disk ... \n" % opts.nbestDS)
         write_ds_to_file(nbests, opts.nbestDS)
+        sys.stderr.write("Finish writing %s\n" % opts.nbestDS)
 
     arg_num = len(nbests[0][0].feature_list)
     theta = [1.0/arg_num for _ in xrange(arg_num)] #initialization
