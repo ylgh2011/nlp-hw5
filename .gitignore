@@ -6,4 +6,5 @@
 *.weights
 *.nbest
 *.ds
+*.gz
 
