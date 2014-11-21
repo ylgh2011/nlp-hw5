@@ -44,7 +44,8 @@ Make sure that there are following files under the ./data/ directory
 Make sure you have library.py and final_method.py in the same directory
 
 3.
-python final_method.py -t 100000 -x 2000 | python rerank.py | python score-reranker.py
+python final_method.py -t 100000 -x 2000 > f.weights
+python rerank.py -w f.weights | python score-reranker.py
 
 
 # Usage: 
