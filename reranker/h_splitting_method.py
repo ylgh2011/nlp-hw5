@@ -21,8 +21,10 @@ optparser.add_option("-t", "--tau", dest="tau", type="float", default=1.0, help=
 optparser.add_option("-e", "--eta", dest="eta", type="float", default=1, help="perceptron learning rate (default 0.1)")
 optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="number of epochs for perceptron training (default 5)")
 
-optparser.add_option("-r", "--top_r", dest="r", type="float", default=0.1, help="top r percent scores filter (default 50)")
-optparser.add_option("-k", "--bottom_k", dest="k", type="float", default=0.1, help="bottom k percent scores filter (default 50)")
+
+optparser.add_option("-r", "--top_r", dest="r", type="float", default=0.1, help="top r percent scores filter (default 0.1)")
+optparser.add_option("-k", "--bottom_k", dest="k", type="float", default=0.1, help="bottom k percent scores filter (default 0.1)")
+
 
 optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="train French file")
 optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
@@ -45,8 +47,6 @@ def dot_product(l1, l2):
     return ans
 
 def scale_product(l1, l2):
-    # if ( type(l1) != type(int) and type(l1) != type(float)):
-    #     raise(ValueError, "first variable should be a scalar")
     ans = [0 for _ in xrange(len(l2))]
     for i in xrange(len(l2)):
         ans[i] = l1 * l2[i]
@@ -58,6 +58,8 @@ def vector_plus(v1, v2, multiply=1):
         ans.append(v1[i] + multiply * v2[i])
     return ans
 
+def g_func(y1, y2):
+    return float(1.0/y1 - 1.0/y2)
 
 def main():
     references = []
@@ -130,7 +132,7 @@ def main():
                         mu[l] = mu[l] + 1
                     else:
                         cnt += 1
-                if (j + 1) % 10000 == 0:
+                if (j + 1) % 100 == 0:
                     sys.stderr.write(".")
 
             vector_sum = [0 for _ in xrange(len(nbest[0].feature_list))]

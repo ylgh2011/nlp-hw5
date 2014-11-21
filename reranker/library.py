@@ -7,7 +7,6 @@ def read_ds_from_file(filename):
     import pickle
     import gzip
     pfile = None
-    dataStructure = None
     try:
         pfile = gzip.open(filename, 'rb') if filename[-3:] == '.gz' \
                 else open(filename, 'rb')
@@ -24,8 +23,8 @@ def read_ds_from_file(filename):
 def write_ds_to_file(dataStructure, filename):
     import pickle
     import gzip
-    output = gzip.open(filename, 'wb') if filename[-3:] == '.gz' \
-             else open(filename, 'wb')
+    output = gzip.open(filename, 'rb') if filename[-3:] == '.gz' \
+                else open(filename, 'rb')
     pickle.dump(dataStructure, output)
     output.close()
 
@@ -47,12 +46,12 @@ def ss(s):
 
 def init(tFileName):
     sys.stderr.write("Reading dump dictionary %s for ibm model ... \n" % tFileName)
-    d = read_ds_from_file(tFileName)
-    if d is None:
+    t = read_ds_from_file(tFileName)
+    if t is None:
         sys.stderr.write("There is no such file %s to initialize ibm model dictionary" % tFileName)
         exit(1)
-    sys.stderr.write("Finish reading dump dictionary, len=" + str(len(d)) + '\n')
-    return d
+    sys.stderr.write("Finish reading dump dictionary, len=" + str(len(t)) + '\n')
+    return t
     
 init_prob = 1.0 / 30.0
 def t_f_given_e(t, fw, ew):
@@ -91,42 +90,32 @@ def ibm_model_2_score(t, q, f, e):
     return score    
 
 
-Expected_number_of_features = 9
 def pre_process(fileNameList):
     shouldInit_this_item = []
-    # sys.stderr.write(str(fileNameList))
 
     for item in fileNameList:
         frFileName = item[0]
         nBestFileName = item[1]
         enFileName = item[2]
-        sys.stderr.write(frFileName +', ' + nBestFileName + ', ' + enFileName + ': ')
         for line in file(nBestFileName):
             (i, sentence, features) = line.strip().split("|||")
-            if len(features.strip().split()) == Expected_number_of_features:
+            if len(features.strip().split()) == 9:
+                sys.stderr.write("Number of features is already 9, so %s is not updated\n" % nBestFileName)
                 shouldInit_this_item.append(0)
-                sys.stderr.write("0\n")
             else:
                 shouldInit_this_item.append(1)
-                sys.stderr.write("1\n")
             break
-        # shouldInit_this_item.append(1)
+        shouldInit_this_item.append(1)
 
     if sum(shouldInit_this_item) > 0:
         t = init('./data/ibm2.t.ds.gz')
         q = init('./data/ibm2.q.ds.gz')
         for i, item in enumerate(fileNameList):
-            sys.stderr.write(str(item) + '\n')
-            frFileName = item[0]
-            nBestFileName = item[1]
-            enFileName = item[2]
-            sys.stderr.write(frFileName +', ' + nBestFileName + ', ' + enFileName + '\n')
-            if shouldInit_this_item[i] == 1:
+            if shouldInit_this_item(i) == 1:
+                frFileName = item[0]
+                nBestFileName = item[1]
+                enFileName = item[2]
                 real_pre_process(frFileName, nBestFileName, enFileName, t, q)
-            else:
-                sys.stderr.write("Number of features is already %d, so %s is not updated\n" % (Expected_number_of_features, nBestFileName))
-    else:
-        sys.stderr.write("No .nbest files need to be updated\n")
 
 
 def real_pre_process(frFileName, nBestFileName, enFileName, t, q):
@@ -151,9 +140,9 @@ def real_pre_process(frFileName, nBestFileName, enFileName, t, q):
         feature_list = [x for x in ss(features)]#[0:6]
 
         index = int(i) if int(i) < len(englishes) else len(englishes) - 1
-        # feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
-        # feature_list.append(str(untranslatedWords(frenches[int(i)], sentence, englishes[index])))
-        # feature_list.append(str(ibm_model_1_score(t, frenches[int(i)], sentence))) # IBM model 1 score
+        feature_list.append(str(-1 * abs(len(ss(sentence)) - len(ss(englishes[index])))))
+        feature_list.append(str(untranslatedWords(frenches[int(i)], sentence, englishes[index])))
+        feature_list.append(str(ibm_model_1_score(t, frenches[int(i)], sentence))) # IBM model 1 score
         feature_list.append(str(ibm_model_2_score(t, q, frenches[int(i)], sentence))) # IBM model 2 score
 
         newlines.append(i + '|||' + sentence + '||| ' + ' '.join(feature_list) + '\n')
@@ -163,7 +152,6 @@ def real_pre_process(frFileName, nBestFileName, enFileName, t, q):
     nBestFile = open(nBestFileName, 'wb')
     nBestFile.writelines(newlines)
     nBestFile.close()
-    sys.stderr.write("Finish writing %s\n" % nBestFileName)
 
 
 if __name__ == '__main__':
