@@ -24,7 +24,7 @@ We used a length-adapting reading & operating methods in the program so it can a
 
 # Warning:
 * We make use of some extra features for the nbest file, and as a result, our method will first preprocess the training and testing English file and French file and then rewrite both training and testing nbest files. 
-** PS. For IBM model 2 score, we made use of an additional training data of homework 3 and generate dumps of word counts. In the preprocess procedure, we will first read through 2 files and then generate the IBM score for .nbest file. Because thses 2 file are too large to be included in the submitted package, so we give 2 dropbox links to download these 2 files in the following section
+** PS. For IBM model 2 score, we made use of an additional training data of homework 3 and generate dumps of word counts. In the preprocess procedure, we will first read through 2 files and then generate the IBM score for .nbest file. Because these 2 file are too large to be included in the submitted package, we give 2 dropbox links to download these 2 files in the following section
 
 
 # How to run our program:
