@@ -21,8 +21,8 @@ optparser.add_option("-t", "--tau", dest="tau", type="float", default=1.0, help=
 optparser.add_option("-e", "--eta", dest="eta", type="float", default=1, help="perceptron learning rate (default 0.1)")
 optparser.add_option("-p", "--epo", dest="epo", type="int",default=5, help="number of epochs for perceptron training (default 5)")
 
-optparser.add_option("-r", "--top_r", dest="r", type="int", default=0.1, help="top r percent scores filter (default 50)")
-optparser.add_option("-k", "--bottom_k", dest="k", type="int", default=0.1, help="bottom k percent scores filter (default 50)")
+optparser.add_option("-r", "--top_r", dest="r", type="float", default=0.1, help="top r percent scores filter (default 50)")
+optparser.add_option("-k", "--bottom_k", dest="k", type="float", default=0.1, help="bottom k percent scores filter (default 50)")
 
 optparser.add_option("--fr", dest="fr", default=os.path.join("data", "train.fr"), help="train French file")
 optparser.add_option("--testnbest", dest="testnbest", default=os.path.join("data", "test.nbest"), help="test N-best file")
@@ -130,7 +130,7 @@ def main():
                         mu[l] = mu[l] + 1
                     else:
                         cnt += 1
-                if j % 10000 == 0:
+                if (j + 1) % 10000 == 0:
                     sys.stderr.write(".")
 
             vector_sum = [0 for _ in xrange(len(nbest[0].feature_list))]
@@ -142,7 +142,7 @@ def main():
             # avg_theta = vector_plus(avg_theta, theta)
             # avg_cnt += 1
 
-        sys.stderr.write("\n Non-supported vectors:  %s\n" % (mistake,))
+        sys.stderr.write("\n Non-supported vectors:  %s\n" % (cnt,))
     
 
     # weights = [ avg / avg_cnt if avg_cnt !=0 else 1/float(arg_num) for avg in avg_theta ]
